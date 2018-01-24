@@ -1,28 +1,71 @@
 import os
-import json
+import csv
 import datetime
 import requests
 from bs4 import BeautifulSoup
 from skaters import skaters
-from links import skater_total_segment_data
+from links import base_url, skater_name_to_string
 
 
-# GET ALL DATA FROM SEGMENT
-def get_segment_data(link):
+def add_skater_tes_scores_to_csv(skater, segment):
+    skater_links = read_skater_links_from_file(skater, segment)
+    for link in skater_links:
+        print(link)
+        competition = get_competition_details(link)
+        tes = get_tes_scores(link)
+
+        if not os.path.exists("skater_data/tes_scores.csv"):
+            with open("skater_data/tes_scores.csv", "w", newline="", encoding= "utf-8") as csvfile:
+                fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "tech_element", "info", "bv", "goe"]
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+                for tes_score in tes:
+                    writer.writerow({
+                        "skater_name" : skater.get("name"),
+                        "skater_country": skater.get("country"),
+                        "event": competition.get("name"),
+                        "location": competition.get("place"),
+                        "date": competition.get("date"),
+                        "segment": segment,
+                        "tech_element": tes_score.get("label"),
+                        "info": tes_score.get("info"),
+                        "bv": tes_score.get("BV"),
+                        "goe": tes_score.get("GOE")
+                        })
+            csvfile.close()
+        else:
+            with open("skater_data/tes_scores.csv", "a", newline="", encoding= "utf-8") as csvfile:
+                fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "tech_element", "info", "bv", "goe"]
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                for tes_score in tes:
+                    writer.writerow({
+                        "skater_name" : skater.get("name"),
+                        "skater_country": skater.get("country"),
+                        "event": competition.get("name"),
+                        "location": competition.get("place"),
+                        "date": competition.get("date"),
+                        "segment": segment,
+                        "tech_element": tes_score.get("label"),
+                        "info": tes_score.get("info"),
+                        "bv": tes_score.get("BV"),
+                        "goe": tes_score.get("GOE")
+                        })
+            csvfile.close()
+# READ SKATER LINKS FROM FILE
+def read_skater_links_from_file(skater, segment):
+    skater_links = []
+    file_name = skater_name_to_string(skater) + "_" + segment + "_links.txt"
+    path = "skater_data/links/" + file_name
+    if os.path.exists(path):
+        skater_links = [line.strip() for line in open(path)]
+    return skater_links
+
+
+# Get competition name, place, date
+def get_competition_details(link):
     page = requests.get(link)
     soup = BeautifulSoup(page.text, "lxml")
     competition_link = base_url + soup.find('h1').find('a').get('href')
-    competition_details = get_competition_details(competition_link)
-    tables = soup.findAll("table", {"class" : "ptab ptab2"})
-    competition_data = {
-        "details" : competition_details,
-        "tes" : get_tes_scores(tables[1]),
-        "pcs" : get_pcs_scores(tables[2])
-    }
-    return competition_data   
-
-# GET COMPETITION NAME AND DATE
-def get_competition_details(competition_link):
     page =  requests.get(competition_link)
     soup = BeautifulSoup(page.text, "lxml")
     competition_name = soup.find('h1').getText()
@@ -35,9 +78,9 @@ def get_competition_details(competition_link):
     }
     return competition_details
 
-
 # Extract TES scores from segment tables
-def get_tes_scores(table):
+def get_tes_scores(link):
+    table = get_score_table(link, "tes")
     lines = table.findAll('tr')
     length = len(lines)
     index = 1
@@ -54,8 +97,9 @@ def get_tes_scores(table):
         index += 1
     return tech_elements
 
-# Extract component scores from segment tables
-def get_pcs_scores(table):
+# Extract PCS scores from segment tables
+def get_pcs_scores(link):
+    table = get_score_table(link, "pcs")
     lines = table.findAll('tr')
     length = len(lines)
     index = 1
@@ -76,39 +120,18 @@ def get_pcs_scores(table):
         index += 1
     return program_components
 
-def skater_total_segment_data(skater, segment):
-    competition_links = get_skater_programs(skater, segment)
-    skater_segment_data = []
-    for link in competition_links:
-        segment_data = get_segment_data(link)
-        skater_segment_data.append(segment_data)
-    return skater_segment_data
+# Get relevant score table
+def get_score_table(link, type_of_score):
+    page = requests.get(link)
+    soup = BeautifulSoup(page.text, "lxml")
+    tables = soup.findAll("table", {"class" : "ptab ptab2"})
+    if type_of_score == "tes":
+        return tables[1]
+    elif type_of_score == "pcs":
+        return tables[2]
+    else:
+        return ""
 
-yuzu = skater_total_segment_data(skaters[0], "short")
-
-
-
-# Add all short/long segment scores for each skater in an array
-def get_segment_scores_for_all_skaters(segment):
-    all_segment_scores = []
-    for skater in skaters:
-        segment_scores = {
-            "skater" : skater,
-            "segment_scores" : skater_total_segment_data(skater, segment)
-        }
-        all_segment_scores.append(segment_scores)
-    return all_segment_scores
-
-
-
-create_project_dir("data")
-
-write_file("data/short_program_scores.txt", "All short program scores from the 2016/2017 and 2017/2018 seasons for the top 10 men singles skaters participating at the 2018 Olympics \n")
-all_short_program_scores = get_segment_scores_for_all_skaters("short")
-append_to_file("data/short_program_scores.txt", all_short_program_scores)
-
-write_file("data/long_program_scores.txt", "All long program scores from the 2016/2017 and 2017/2018 seasons for the top 10 men singles skaters participating at the 2018 Olympics \n")
-all_long_program_scores = get_segment_scores_for_all_skaters("long")
-append_to_file("data/long_program_scores.txt", all_long_program_scores)
+add_skater_tes_scores_to_csv(skaters[0], "short")
 
 
