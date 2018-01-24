@@ -1,15 +1,20 @@
 import requests
-from bs4 import BeautifulSoup
-from dateutil import parser
+import os
 from skaters import skaters
+from bs4 import BeautifulSoup
 
 base_url = "http://skatingscores.com"
 
 # FIND SKATER PAGE URL FROM NAME
 def get_skater_page(skater):
     skaternames = skater.get("name").lower().split()
-    link = base_url + "/unit/" + skater.get("country") + "/" + skaternames[0] + "_" + skaternames[1] + "/"
+    link = base_url + "/unit/" + skater.get("country") + "/" + skater_name_to_string(skater) + "/"
     return link
+
+def skater_name_to_string(skater):
+    skaternames = skater.get("name").lower().split()
+    skater_string = skaternames[0] + "_" + skaternames[1]
+    return skater_string
 
 # GET ALL SKATER PROGRAM RESULT PAGES LINKS BY NAME AND TYPE (SP/LP)
 def get_skater_programs(skater, segment):
@@ -28,75 +33,30 @@ def get_skater_programs(skater, segment):
                     competitionlinks.append(base_url + tablecells[3].find('a').get('href'))
     return competitionlinks
 
-# GET ALL DATA FROM SEGMENT
-def get_segment_data(link):
-    page = requests.get(link)
-    soup = BeautifulSoup(page.text, "lxml")
-    competition_link = base_url + soup.find('h1').find('a').get('href')
-    competition_details = get_competition_details(competition_link)
-    tables = soup.findAll("table", {"class" : "ptab ptab2"})
-    competition_data = {
-        "details" : competition_details,
-        "tes" : get_tes_scores(tables[1]),
-        "pcs" : get_pcs_scores(tables[2])
-    }
-    return competition_data   
+# CREATE PROJECT FOLDER
+def create_project_dir(directory):
+    if not os.path.exists(directory):
+        print('Creating folder ' + directory)
+        os.makedirs(directory)
 
-# GET COMPETITION NAME AND DATE
-def get_competition_details(competition_link):
-    page =  requests.get(competition_link)
-    soup = BeautifulSoup(page.text, "lxml")
-    competition_name = soup.find('h1').getText()
-    competition_place_date = soup.findAll('h2')
-    competition_dates = competition_place_date[1].getText().split(" - ")
-    competition_details = {
-        "name" : competition_name,
-        "place" : competition_place_date[0].getText(),
-        "date" : competition_dates[1]
-    }
-    return competition_details
+# DELETE THE CONTENTS OF A FILE
+def delete_file_contents(path):
+    with open(path, 'w'):
+        pass
 
+# SAVE SKATER SEGMENT LINKS TO FILE
+def save_skater_links_to_file(skater, segment):
+    links = get_skater_programs(skater, segment)
+    create_project_dir("skater_data/links")
+    file_name = skater_name_to_string(skater) + "_" + segment + "_links.txt"
+    path = "skater_data/links/" + file_name
+    delete_file_contents(path)
+    f = open(path, 'w')
+    for link in links:
+        f.write(link + "\n")
+    f.close()
 
-# Extract TES scores from segment tables
-def get_tes_scores(table):
-    lines = table.findAll('tr')
-    length = len(lines)
-    index = 1
-    tech_elements = []
-    while index < length - 1:
-        tablecells = lines[index].findAll('td')
-        element = {
-            "label" : tablecells[1].getText(),
-            "info" : tablecells[2].getText(),
-            "BV" : tablecells[3].getText(),
-            "GOE" : tablecells[5].getText()
-        }
-        tech_elements.append(element)
-        index += 1
-    return tech_elements
-
-# Extract component scores from segment tables
-def get_pcs_scores(table):
-    lines = table.findAll('tr')
-    length = len(lines)
-    index = 1
-    program_components = []
-    while index < length - 1:
-        tablecells = lines[index].findAll('td')
-        rowlength = len(tablecells)
-        component_placement_score = tablecells[rowlength - 1].getText()
-        component = {
-            "label" : tablecells[0].getText(),
-            "score" : component_placement_score[1:len(component_placement_score)]
-        }
-        program_components.append(component)
-        index += 1
-    return program_components
-
-def skater_total_segment_data(skater, segment):
-    competition_links = get_skater_programs(skater, segment)
-    skater_segment_data = []
-    for link in competition_links:
-        segment_data = get_segment_data(link)
-        skater_segment_data.append(segment_data)
-    return skater_segment_data
+# SAVE ALL SKATER LINKS
+for skater in skaters:
+    save_skater_links_to_file(skater, "short")
+    save_skater_links_to_file(skater, "long")
