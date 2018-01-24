@@ -1,4 +1,4 @@
-# TOP 10 of the Singles Men skaters participating in the 2018 Winter Olympics according to ISU World Standings
+# TOP 10 of the Singles Men competitiors participating in the 2018 Winter Olympics according to ISU World Standings
 
 skaters = [
         {
