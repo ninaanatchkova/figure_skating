@@ -37,10 +37,6 @@ def delete_file_contents(path):
     with open(path, 'w'):
         pass
 
-def convert_dates_to_string(o):
-    if isinstance(o, datetime.datetime):
-        return o.__str__()
-
 create_project_dir("data")
 
 write_file("data/short_program_scores.txt", "All short program scores from the 2016/2017 and 2017/2018 seasons for the top 10 men singles skaters participating at the 2018 Olympics \n")

@@ -52,7 +52,7 @@ def get_competition_details(competition_link):
     competition_details = {
         "name" : competition_name,
         "place" : competition_place_date[0].getText(),
-        "date" : parser.parse(competition_dates[1])
+        "date" : competition_dates[1]
     }
     return competition_details
 
