@@ -6,11 +6,14 @@ from bs4 import BeautifulSoup
 from skaters import skaters
 from links import base_url, skater_name_to_string
 
+def all_tes_scores_to_csv():
+    for skater in skaters:
+        add_skater_tes_scores_to_csv(skater, "short")
+        add_skater_tes_scores_to_csv(skater, "long")
 
 def add_skater_tes_scores_to_csv(skater, segment):
     skater_links = read_skater_links_from_file(skater, segment)
     for link in skater_links:
-        print(link)
         competition = get_competition_details(link)
         tes = get_tes_scores(link)
 
@@ -132,6 +135,5 @@ def get_score_table(link, type_of_score):
     else:
         return ""
 
-add_skater_tes_scores_to_csv(skaters[0], "short")
-
+all_tes_scores_to_csv()
 
