@@ -11,6 +11,11 @@ def all_tes_scores_to_csv():
         add_skater_tes_scores_to_csv(skater, "short")
         add_skater_tes_scores_to_csv(skater, "long")
 
+def all_pcs_scores_to_csv():
+    for skater in skaters:
+        add_skater_pcs_scores_to_csv(skater, "short")
+        add_skater_pcs_scores_to_csv(skater, "long")
+
 def add_skater_tes_scores_to_csv(skater, segment):
     skater_links = read_skater_links_from_file(skater, segment)
     for link in skater_links:
@@ -52,8 +57,54 @@ def add_skater_tes_scores_to_csv(skater, segment):
                         "info": tes_score.get("info"),
                         "bv": tes_score.get("BV"),
                         "goe": tes_score.get("GOE")
-                        })
+                    })
             csvfile.close()
+
+def add_skater_pcs_scores_to_csv(skater, segment):
+    skater_links = read_skater_links_from_file(skater, segment)
+    for link in skater_links:
+        competition = get_competition_details(link)
+        pcs_score = get_pcs_scores(link)
+
+        if not os.path.exists("skater_data/pcs_scores.csv"):
+            with open("skater_data/pcs_scores.csv", "w", newline="", encoding= "utf-8") as csvfile:
+                fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "skating_skills", "transitions", "performance", "composition", "interpretation"]
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerow({
+                    "skater_name" : skater.get("name"),
+                    "skater_country": skater.get("country"),
+                    "event": competition.get("name"),
+                    "location": competition.get("place"),
+                    "date": competition.get("date"),
+                    "segment": segment,
+                    "skating_skills": pcs_score.get("skating_skills"),
+                    "transitions": pcs_score.get("transitions"),
+                    "performance": pcs_score.get("performance"),
+                    "composition": pcs_score.get("composition"),
+                    "interpretation": pcs_score.get("interpretation")
+                    })
+            csvfile.close()
+        else:
+            with open("skater_data/pcs_scores.csv", "a", newline="", encoding= "utf-8") as csvfile:
+                fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "skating_skills", "transitions", "performance", "composition", "interpretation"]
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writerow({
+                    "skater_name" : skater.get("name"),
+                    "skater_country": skater.get("country"),
+                    "event": competition.get("name"),
+                    "location": competition.get("place"),
+                    "date": competition.get("date"),
+                    "segment": segment,
+                    "skating_skills": pcs_score.get("skating_skills"),
+                    "transitions": pcs_score.get("transitions"),
+                    "performance": pcs_score.get("performance"),
+                    "composition": pcs_score.get("composition"),
+                    "interpretation": pcs_score.get("interpretation")
+                })
+            csvfile.close()
+       
+
 # READ SKATER LINKS FROM FILE
 def read_skater_links_from_file(skater, segment):
     skater_links = []
@@ -106,7 +157,7 @@ def get_pcs_scores(link):
     lines = table.findAll('tr')
     length = len(lines)
     index = 1
-    program_components = []
+    program_components = {}
     while index < length - 1:
         tablecells = lines[index].findAll('td')
         rowlength = len(tablecells)
@@ -115,11 +166,7 @@ def get_pcs_scores(link):
         label = component_label[0]
         if len(component_label) > 1:
             label += "_" + component_label[1]
-        component = {
-            "label" : label,
-            "score" : component_placement_score[1:len(component_placement_score)]
-        }
-        program_components.append(component)
+        program_components.update({label : component_placement_score[1:len(component_placement_score)]})
         index += 1
     return program_components
 
@@ -134,6 +181,3 @@ def get_score_table(link, type_of_score):
         return tables[2]
     else:
         return ""
-
-all_tes_scores_to_csv()
-
