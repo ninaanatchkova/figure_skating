@@ -95,13 +95,8 @@ def get_pcs_scores(table):
 
 def skater_total_segment_data(skater, segment):
     competition_links = get_skater_programs(skater, segment)
-    print(competition_links)
     skater_segment_data = []
     for link in competition_links:
         segment_data = get_segment_data(link)
-        print(segment_data)
         skater_segment_data.append(segment_data)
     return skater_segment_data
-
-# TEST
-print(skater_total_segment_data(skaters[2], "short"))
