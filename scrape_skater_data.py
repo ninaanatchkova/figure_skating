@@ -4,17 +4,23 @@ import datetime
 import requests
 from bs4 import BeautifulSoup
 from skaters import skaters
-from links import base_url, skater_name_to_string
+
+base_url = "http://skatingscores.com"
+
+def skater_name_to_string(skater):
+    skaternames = skater.get("name").lower().split()
+    skater_string = skaternames[0] + "_" + skaternames[1]
+    return skater_string
 
 def all_tes_scores_to_csv():
     for skater in skaters:
         add_skater_tes_scores_to_csv(skater, "short")
         add_skater_tes_scores_to_csv(skater, "long")
 
-def all_pcs_scores_to_csv():
+def all_tss_scores_to_csv():
     for skater in skaters:
-        add_skater_pcs_scores_to_csv(skater, "short")
-        add_skater_pcs_scores_to_csv(skater, "long")
+        add_skater_tss_scores_to_csv(skater, "short")
+        add_skater_tss_scores_to_csv(skater, "long")
 
 def add_skater_tes_scores_to_csv(skater, segment):
     skater_links = read_skater_links_from_file(skater, segment)
@@ -60,15 +66,18 @@ def add_skater_tes_scores_to_csv(skater, segment):
                     })
             csvfile.close()
 
-def add_skater_pcs_scores_to_csv(skater, segment):
+def add_skater_tss_scores_to_csv(skater, segment):
     skater_links = read_skater_links_from_file(skater, segment)
     for link in skater_links:
         competition = get_competition_details(link)
-        pcs_score = get_pcs_scores(link)
+        tss_score = get_total_segment_score(link)
+        bv_score = get_total_bv(link)
+        tes_score = get_total_tes(link)
+        pcs_score = get_total_pcs_scores(link)
 
-        if not os.path.exists("skater_data/pcs_scores.csv"):
-            with open("skater_data/pcs_scores.csv", "w", newline="", encoding= "utf-8") as csvfile:
-                fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "skating_skills", "transitions", "performance", "composition", "interpretation"]
+        if not os.path.exists("skater_data/tss_scores.csv"):
+            with open("skater_data/tss_scores.csv", "w", newline="", encoding= "utf-8") as csvfile:
+                fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "tss", "bv", "tes", "pcs"]
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 writer.writerow({
@@ -78,16 +87,15 @@ def add_skater_pcs_scores_to_csv(skater, segment):
                     "location": competition.get("place"),
                     "date": competition.get("date"),
                     "segment": segment,
-                    "skating_skills": pcs_score.get("skating_skills"),
-                    "transitions": pcs_score.get("transitions"),
-                    "performance": pcs_score.get("performance"),
-                    "composition": pcs_score.get("composition"),
-                    "interpretation": pcs_score.get("interpretation")
-                    })
+                    "tss": tss_score,
+                    "bv": bv_score,
+                    "tes": tes_score,
+                    "pcs": pcs_score
+                })
             csvfile.close()
         else:
-            with open("skater_data/pcs_scores.csv", "a", newline="", encoding= "utf-8") as csvfile:
-                fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "skating_skills", "transitions", "performance", "composition", "interpretation"]
+            with open("skater_data/tss_scores.csv", "a", newline="", encoding= "utf-8") as csvfile:
+                fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "tss", "bv", "tes", "pcs"]
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writerow({
                     "skater_name" : skater.get("name"),
@@ -96,11 +104,10 @@ def add_skater_pcs_scores_to_csv(skater, segment):
                     "location": competition.get("place"),
                     "date": competition.get("date"),
                     "segment": segment,
-                    "skating_skills": pcs_score.get("skating_skills"),
-                    "transitions": pcs_score.get("transitions"),
-                    "performance": pcs_score.get("performance"),
-                    "composition": pcs_score.get("composition"),
-                    "interpretation": pcs_score.get("interpretation")
+                    "tss": tss_score,
+                    "bv": bv_score,
+                    "tes": tes_score,
+                    "pcs": pcs_score
                 })
             csvfile.close()
        
@@ -151,8 +158,8 @@ def get_tes_scores(link):
         index += 1
     return tech_elements
 
-# Extract PCS scores from segment tables
-def get_pcs_scores(link):
+# Extract PCS scores from segment tables // DEPRECATED
+''' def get_pcs_scores(link):
     table = get_score_table(link, "pcs")
     lines = table.findAll('tr')
     length = len(lines)
@@ -168,16 +175,56 @@ def get_pcs_scores(link):
             label += "_" + component_label[1]
         program_components.update({label : component_placement_score[1:len(component_placement_score)]})
         index += 1
-    return program_components
+    return program_components '''
+
+# Extract total PCS from table
+def get_total_pcs_scores(link):
+    table = get_score_table(link, "pcs")
+    line = table.find('tr')
+    cells = line.findAll('td')
+    placement_pcs = cells[1].get_text(strip=True, separator=" ").split(" ")
+    return placement_pcs[1]
+
+# Extract total BV from table
+def get_total_bv(link):
+    table = get_score_table(link, "tbv")
+    line = table.find('tr')
+    cells = line.findAll('td')
+    placement_bv = cells[1].get_text(strip=True, separator=" ").split(" ")
+    return placement_bv[1]
+
+# Extract total TES from table
+def get_total_tes(link):
+    table = get_score_table(link, "ttes")
+    line = table.find('tr')
+    cells = line.findAll('td')
+    placement_tes = cells[1].get_text(strip=True, separator=" ").split(" ")
+    return placement_tes[1]
+
+# Extract TSS from table
+def get_total_segment_score(link):
+    table = get_score_table(link, "tss")
+    lines = table.findAll('tr')
+    cells = lines[1].findAll('td')
+    tss = cells[2].get_text()
+    return tss
 
 # Get relevant score table
 def get_score_table(link, type_of_score):
     page = requests.get(link)
     soup = BeautifulSoup(page.text, "lxml")
-    tables = soup.findAll("table", {"class" : "ptab ptab2"})
-    if type_of_score == "tes":
-        return tables[1]
-    elif type_of_score == "pcs":
+    tables = soup.findAll("table", {"class" : "ptab"})
+    if type_of_score == "tss":
+        return tables[0]
+    elif type_of_score == "tes":
         return tables[2]
+    elif type_of_score == "tbv":
+        return tables[4]
+    elif type_of_score == "ttes":
+        return tables[5]
+    elif type_of_score == "pcs":
+        return tables[7]
     else:
         return ""
+
+all_tss_scores_to_csv()
