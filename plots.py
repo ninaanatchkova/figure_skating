@@ -12,6 +12,11 @@ start_of_season_2017_2018 = datetime.datetime(2017,7,1,0,0,0).toordinal()
 end_of_season_2017_2018 = datetime.datetime(2018,6,30,0,0,0).toordinal()
 winter_olympics_2018=datetime.datetime(2018,2,9,0,0,0).toordinal()
 
+def skater_name_to_string(skater):
+    skaternames = skater.get("name").lower().split()
+    skater_string = skaternames[0] + "_" + skaternames[1]
+    return skater_string
+
 def skater_regression(skater, score, segment, start, end):
     data = pd.read_csv("skater_data/tss_scores.csv")
     data = data.loc[data["skater_name"] == skater.get("name")]
@@ -24,14 +29,28 @@ def skater_regression(skater, score, segment, start, end):
     
     model = LinearRegression()
     model.fit(X, y)
-    print(model.predict(end))
+    prediction = model.predict(end)
+    prediction_string = "{0:.2f}".format(prediction[0])
+    fig = plt.figure()
     plt.scatter(X, y, color='r')
     plt.plot(X, model.predict(X), color='k')
     plt.xticks(X, dates, rotation='vertical')
     plt.xlabel("Date")
     plt.ylabel(score.upper())
     plt.xlim(xmin=start, xmax=end)
-    plt.show()
 
-skater_regression(skaters[0], "tss", "long", start_of_season_2016_2017, winter_olympics_2018)
+    fig.savefig("skater_data/plots/" + skater_name_to_string(skater) + "_" + segment + "_" + score + "_" + prediction_string + ".png")
+    
+    #plt.show()
+
+
+for skater in skaters:
+    skater_regression(skater, "tss", "short", start_of_season_2016_2017, winter_olympics_2018)
+    skater_regression(skater, "tss", "long", start_of_season_2016_2017, winter_olympics_2018)
+    skater_regression(skater, "pcs", "short", start_of_season_2016_2017, winter_olympics_2018)
+    skater_regression(skater, "pcs", "long", start_of_season_2016_2017, winter_olympics_2018)
+    skater_regression(skater, "tes", "short", start_of_season_2016_2017, winter_olympics_2018)
+    skater_regression(skater, "tes", "long", start_of_season_2016_2017, winter_olympics_2018)
+    skater_regression(skater, "bv", "short", start_of_season_2016_2017, winter_olympics_2018)
+    skater_regression(skater, "bv", "long", start_of_season_2016_2017, winter_olympics_2018)
 
