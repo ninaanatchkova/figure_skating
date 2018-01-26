@@ -93,4 +93,4 @@ def generate_regressions_for_all_skaters():
         skater_regression(skater, "bv", "short", start_of_season_2016_2017, winter_olympics_2018)
         skater_regression(skater, "bv", "long", start_of_season_2016_2017, winter_olympics_2018)
 
-# compare_skaters("tss", "short", start_of_season_2016_2017, winter_olympics_2018)
+
