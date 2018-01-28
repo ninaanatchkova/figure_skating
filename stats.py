@@ -32,5 +32,23 @@ def create_boxplots(segment, type_of_score):
     # Save the figure
     # fig.savefig('fig1.png', bbox_inches='tight')
 
-create_boxplots("short", "tss")
-create_boxplots("long", "tss")
+# create_boxplots("short", "tss")
+# create_boxplots("long", "tss")
+
+
+# unfinished
+def get_skater_quads(skater):
+    data = pd.read_csv("skater_data/tes_scores.csv")
+    data = data.loc[data["skater_name"] == skater.get("name")]
+    data = data[data["tech_element"].str.startswith("4", na=False)]
+    print(data)
+    score_list = []
+    bv = data["bv"].tolist()
+    goe = data["goe"].tolist()
+    tech_score = []
+    for b, g in zip(bv, goe):
+        t = float(b) + float(g)
+        tech_score.append(t)
+    return (len(bv), tech_score)
+
+# print(get_skater_quads(skaters[0]))
