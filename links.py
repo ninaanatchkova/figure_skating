@@ -1,26 +1,34 @@
 import requests
 import os
-from skaters import skaters
+from skaters import men, ladies, pairs, dance
 from bs4 import BeautifulSoup
 
 base_url = "http://skatingscores.com"
 
-# FIND SKATER PAGE URL FROM NAME
+# Find skater page at skatingscores.com by name
 def get_skater_page(skater):
     skaternames = skater.get("name").lower().split()
     link = base_url + "/unit/" + skater.get("country") + "/" + skater_name_to_string(skater) + "/"
     return link
 
+# Convert skater names to url string
 def skater_name_to_string(skater):
     skaternames = skater.get("name").lower().split()
-    skater_string = skaternames[0] + "_" + skaternames[1]
+    skater_string = skaternames[0]
+    i = 1
+    while i < len(skaternames):
+        skater_string += "_"
+        skater_string += skaternames[i]
+        i += 1
     return skater_string
 
-# GET ALL SKATER PROGRAM RESULT PAGES LINKS BY NAME AND TYPE (SP/LP)
-def get_skater_programs(skater, segment):
+# Get competition links by segment
+def get_skater_programs(category_name, skater, segment):
+    tab_name = {"men": "men-tab", "ladies" : "ladies-tab", "pairs" : "pairs-tab", "dance" : "dance-tab"}
+    tab = tab_name.get(category_name, "default")
     page = requests.get(get_skater_page(skater))
     soup = BeautifulSoup(page.text, "lxml")
-    tables = soup.findAll("table", {"class" : "men-tab"})
+    tables = soup.findAll("table", {"class" : tab})
 
     competitionlinks = []
     for table in tables:
@@ -31,22 +39,23 @@ def get_skater_programs(skater, segment):
                     competitionlinks.append(base_url + tablecells[1].find('a').get('href'))
                 if segment == "long":
                     competitionlinks.append(base_url + tablecells[3].find('a').get('href'))
+    print(competitionlinks)
     return competitionlinks
 
-# CREATE PROJECT FOLDER
+# Create folder for files
 def create_project_dir(directory):
     if not os.path.exists(directory):
         print('Creating folder ' + directory)
         os.makedirs(directory)
 
-# DELETE THE CONTENTS OF A FILE
+# Delete fine contents
 def delete_file_contents(path):
     with open(path, 'w'):
         pass
 
-# SAVE SKATER SEGMENT LINKS TO FILE
-def save_skater_links_to_file(skater, segment):
-    links = get_skater_programs(skater, segment)
+# Get and save segment links to file
+def save_skater_links_to_file(category_name, skater, segment):
+    links = get_skater_programs(category_name, skater, segment)
     create_project_dir("skater_data/links")
     file_name = skater_name_to_string(skater) + "_" + segment + "_links.txt"
     path = "skater_data/links/" + file_name
@@ -56,7 +65,16 @@ def save_skater_links_to_file(skater, segment):
         f.write(link + "\n")
     f.close()
 
-# SAVE ALL SKATER LINKS
-for skater in skaters:
-    save_skater_links_to_file(skater, "short")
-    save_skater_links_to_file(skater, "long")
+# Save links for all skaters in a category
+def save_all_category_links(category, category_name):
+    for skater in category:
+        save_skater_links_to_file(category_name, skater, "short")
+        save_skater_links_to_file(category_name, skater, "long")
+
+
+################### execute #######################
+
+# save_all_category_links(men, "men")
+# save_all_category_links(ladies, "ladies")
+# save_all_category_links(pairs, "pairs")
+# save_all_category_links(dance, "dance")
