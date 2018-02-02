@@ -3,8 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import csv
 import os
-from skaters import skaters
-from sklearn.cluster import KMeans 
+from skaters import men, ladies, pairs, dance
 
 def skater_means(skater):
     data = pd.read_csv("skater_data/tss_scores.csv")
@@ -71,7 +70,8 @@ def plot_skater_data(x, y):
     
     plt.xlabel(x)
     plt.ylabel(y)
-
+    
+    fig.savefig("skater_data/plots/quad_stats.png", bbox_inches='tight')
     plt.show()
 
 plot_skater_data("long_tss", "short_tss")
