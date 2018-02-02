@@ -2,34 +2,44 @@ import os
 import csv
 import datetime
 import requests
+from time import sleep
+from random import randint
 from bs4 import BeautifulSoup
-from skaters import skaters, ladies
+from skaters import men, ladies, pairs, dance
 
 base_url = "http://skatingscores.com"
 
+# Convert skater names to url string
 def skater_name_to_string(skater):
     skaternames = skater.get("name").lower().split()
-    skater_string = skaternames[0] + "_" + skaternames[1]
+    skater_string = skaternames[0]
+    i = 1
+    while i < len(skaternames):
+        skater_string += "_"
+        skater_string += skaternames[i]
+        i += 1
     return skater_string
 
-def all_tes_scores_to_csv():
-    for skater in ladies:
-        add_skater_tes_scores_to_csv(skater, "short")
-        add_skater_tes_scores_to_csv(skater, "long")
+def all_tes_scores_to_csv(category, category_name):
+    for skater in category:
+        add_skater_tes_scores_to_csv(skater, "short", category_name)
+        add_skater_tes_scores_to_csv(skater, "long", category_name)
 
-def all_tss_scores_to_csv():
-    for skater in ladies:
-        add_skater_tss_scores_to_csv(skater, "short")
-        add_skater_tss_scores_to_csv(skater, "long")
+def all_tss_scores_to_csv(category, category_name):
+    for skater in category:
+        add_skater_tss_scores_to_csv(skater, "short", category_name)
+        add_skater_tss_scores_to_csv(skater, "long", category_name)
 
-def add_skater_tes_scores_to_csv(skater, segment):
+def add_skater_tes_scores_to_csv(skater, segment, category_name):
     skater_links = read_skater_links_from_file(skater, segment)
+    file_path = "skater_data/" + category_name + "_tes_scores.csv"
     for link in skater_links:
+        print(link)
         competition = get_competition_details(link)
         tes = get_tes_scores(link)
 
-        if not os.path.exists("skater_data/ladies_tes_scores.csv"):
-            with open("skater_data/ladies_tes_scores.csv", "w", newline="", encoding= "utf-8") as csvfile:
+        if not os.path.exists(file_path):
+            with open(file_path, "w", newline="", encoding= "utf-8") as csvfile:
                 fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "tech_element", "info", "bv", "goe"]
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
@@ -48,7 +58,7 @@ def add_skater_tes_scores_to_csv(skater, segment):
                         })
             csvfile.close()
         else:
-            with open("skater_data/ladies_tes_scores.csv", "a", newline="", encoding= "utf-8") as csvfile:
+            with open(file_path, "a", newline="", encoding= "utf-8") as csvfile:
                 fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "tech_element", "info", "bv", "goe"]
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 for tes_score in tes:
@@ -66,17 +76,19 @@ def add_skater_tes_scores_to_csv(skater, segment):
                     })
             csvfile.close()
 
-def add_skater_tss_scores_to_csv(skater, segment):
+def add_skater_tss_scores_to_csv(skater, segment, category_name):
     skater_links = read_skater_links_from_file(skater, segment)
+    file_path = "skater_data/" + category_name + "_tss_scores.csv"
     for link in skater_links:
+        print(link)
         competition = get_competition_details(link)
         tss_score = get_total_segment_score(link)
         bv_score = get_total_bv(link)
         tes_score = get_total_tes(link)
         pcs_score = get_total_pcs_scores(link)
 
-        if not os.path.exists("skater_data/ladies_tss_scores.csv"):
-            with open("skater_data/ladies_tss_scores.csv", "w", newline="", encoding= "utf-8") as csvfile:
+        if not os.path.exists(file_path):
+            with open(file_path, "w", newline="", encoding= "utf-8") as csvfile:
                 fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "tss", "bv", "tes", "pcs"]
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
@@ -94,7 +106,7 @@ def add_skater_tss_scores_to_csv(skater, segment):
                 })
             csvfile.close()
         else:
-            with open("skater_data/ladies_tss_scores.csv", "a", newline="", encoding= "utf-8") as csvfile:
+            with open(file_path, "a", newline="", encoding= "utf-8") as csvfile:
                 fieldnames = ["skater_name", "skater_country", "event", "location", "date", "segment", "tss", "bv", "tes", "pcs"]
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writerow({
@@ -124,9 +136,11 @@ def read_skater_links_from_file(skater, segment):
 
 # Get competition name, place, date
 def get_competition_details(link):
+    sleep(randint(0, 9))
     page = requests.get(link)
     soup = BeautifulSoup(page.text, "lxml")
     competition_link = base_url + soup.find('h1').find('a').get('href')
+    sleep(randint(0, 9))
     page =  requests.get(competition_link)
     soup = BeautifulSoup(page.text, "lxml")
     competition_name = soup.find('h1').getText()
@@ -211,6 +225,7 @@ def get_total_segment_score(link):
 
 # Get relevant score table
 def get_score_table(link, type_of_score):
+    sleep(randint(0, 9))
     page = requests.get(link)
     soup = BeautifulSoup(page.text, "lxml")
     tables = soup.findAll("table", {"class" : "ptab"})
@@ -227,5 +242,11 @@ def get_score_table(link, type_of_score):
     else:
         return ""
 
-all_tss_scores_to_csv()
-all_tes_scores_to_csv()
+# all_tss_scores_to_csv(men, "men")
+# all_tes_scores_to_csv(men, "men")
+all_tss_scores_to_csv(ladies, "ladies")
+all_tes_scores_to_csv(ladies, "ladies")
+all_tss_scores_to_csv(pairs, "pairs")
+all_tes_scores_to_csv(pairs, "pairs")
+all_tss_scores_to_csv(dance, "dance")
+all_tes_scores_to_csv(dance, "dance")

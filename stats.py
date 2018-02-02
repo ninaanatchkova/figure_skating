@@ -1,30 +1,30 @@
 import pandas as pd
 import numpy as np 
 import matplotlib.pyplot as plt 
-from skaters import skaters
+from skaters import ladies, men, pairs, dance
 
 
-def read_skater_data(skater, segment, type_of_score):
-    data = pd.read_csv("skater_data/tss_scores.csv")
+def read_skater_data(category_name, skater, segment, type_of_score):
+    data = pd.read_csv("skater_data/" + category_name + "_tss_scores.csv")
     data = data.loc[data["skater_name"] == skater.get("name")]
     data = data.loc[data["segment"] == segment]
     return data[type_of_score].tolist()
 
-def all_skaters_data(segment, type_of_score):
+def all_skaters_data(category, category_name, segment, type_of_score):
     all_data = []
-    for skater in skaters:
-        data = read_skater_data(skater, segment, type_of_score)
+    for skater in category:
+        data = read_skater_data(category_name, skater, segment, type_of_score)
         all_data.append(data)
     return all_data
 
 
-def create_boxplots(segment, type_of_score):
-    to_plot = all_skaters_data(segment, type_of_score)
+def create_boxplots(category, category_name, segment, type_of_score):
+    to_plot = all_skaters_data(category, category_name, segment, type_of_score)
     fig = plt.figure(1, figsize=(9, 6))
     ax = fig.add_subplot(111)
     bp = ax.boxplot(to_plot)
     skater_names = []
-    for skater in skaters:
+    for skater in category:
         name = skater.get("name")
         skater_names.append(name)
     plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], skater_names, rotation='vertical')
@@ -38,17 +38,32 @@ def create_boxplots(segment, type_of_score):
 
 # unfinished
 def get_skater_quads(skater):
-    data = pd.read_csv("skater_data/tes_scores.csv")
+    data = pd.read_csv("skater_data/men_tes_scores.csv")
     data = data.loc[data["skater_name"] == skater.get("name")]
     data = data[data["tech_element"].str.startswith("4", na=False)]
     print(data)
-    score_list = []
-    bv = data["bv"].tolist()
-    goe = data["goe"].tolist()
-    tech_score = []
-    for b, g in zip(bv, goe):
-        t = float(b) + float(g)
-        tech_score.append(t)
-    return (len(bv), tech_score)
+    i = 0
+    data_size = 0 # find it
+    competition = ""
+    quad_stats = {}
+    while i < data_size:
+        jump_count = 0
+        jump_total_worth = 0
+        if competition != data.iloc[[i]]["event"]:
+            if jump_count != 0:
+                quad_stats.update({ jump_count : jump_total_worth})
+            competition = data.iloc[[i]]["event"]
+            jump_count = 1
+            jump_total_worth = data.iloc[[i]]["bv"] + data.iloc[[i]]["goe"]
+        else:
+            jump_count += 1
+            jump_total_worth += data.iloc[[i]]["bv"] 
+            jump_total_worth += data.iloc[[i]]["goe"]
+        i += 0
+    return quad_stats
+
+# plot averages
+
+
 
 # print(get_skater_quads(skaters[0]))

@@ -48,7 +48,7 @@ def create_project_dir(directory):
         print('Creating folder ' + directory)
         os.makedirs(directory)
 
-# Delete fine contents
+# Delete file contents
 def delete_file_contents(path):
     with open(path, 'w'):
         pass
