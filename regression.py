@@ -190,6 +190,3 @@ def create_project_dir(directory):
 # compare_all_segments_for_category_plot(dance, "dance", start_of_season_2016_2017, winter_olympics_2018)
 
 # generate_regressions_for_all_skaters(men, "men", start_of_season_2016_2017, winter_olympics_2018)
-
-compare_skaters_plot(dance, "dance", "bv", "short", start_of_season_2016_2017, winter_olympics_2018)
-compare_skaters_plot(dance, "dance", "bv", "long", start_of_season_2016_2017, winter_olympics_2018)

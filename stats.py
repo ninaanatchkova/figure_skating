@@ -28,12 +28,10 @@ def create_boxplots(category, category_name, segment, type_of_score):
         name = skater.get("name")
         skater_names.append(name)
     plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], skater_names, rotation='vertical')
-    plt.show()
+    plt.title(category_name.upper() + " " + segment.upper() + " " + type_of_score.upper() + " score".upper())
+    # plt.show()
     # Save the figure
-    # fig.savefig('fig1.png', bbox_inches='tight')
-
-# create_boxplots("short", "tss")
-# create_boxplots("long", "tss")
+    fig.savefig("skater_data/plots/box_plots_" + category_name + "_" + segment + "_" + type_of_score, bbox_inches='tight')
 
 
 # unfinished
@@ -65,5 +63,6 @@ def get_skater_quads(skater):
 # plot averages
 
 
+#################################### Execute functions #######################################
 
-# print(get_skater_quads(skaters[0]))
+# create_boxplots(men, "men", "long", "tss")
