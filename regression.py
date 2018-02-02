@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import datetime
 import operator
+import os
 from skaters import men, ladies, pairs, dance
 
 # important dates
@@ -25,8 +26,8 @@ def skater_name_to_string(skater):
     return skater_string
 
 # Get a prediction for a skater score in a given segment for the END date
-def skater_score_regression(skater, score, segment, start, end):
-    data = pd.read_csv("skater_data/tss_scores.csv")
+def skater_score_regression(category_name, skater, score, segment, start, end):
+    data = pd.read_csv("skater_data/" + category_name + "_tss_scores.csv")
     data = data.loc[data["skater_name"] == skater.get("name")]
     data = data.loc[data["segment"] == segment]
     data["date_ordinal"] = pd.to_datetime(data["date"]).apply(lambda x: x.toordinal())
@@ -40,8 +41,8 @@ def skater_score_regression(skater, score, segment, start, end):
     return prediction
 
 # Plot regression for a skater score in a given segment
-def skater_plot_score_regression(skater, score, segment, start, end):
-    data = pd.read_csv("skater_data/tss_scores.csv")
+def skater_plot_score_regression(category_name, skater, score, segment, start, end):
+    data = pd.read_csv("skater_data/" + category_name + "_tss_scores.csv")
     data = data.loc[data["skater_name"] == skater.get("name")]
     data = data.loc[data["segment"] == segment]
     data["date_ordinal"] = pd.to_datetime(data["date"]).apply(lambda x: x.toordinal())
@@ -66,8 +67,8 @@ def skater_plot_score_regression(skater, score, segment, start, end):
     #plt.show()
 
     # Prepare skater plot for comparison
-def skater_plot_for_comparison(skater, score, segment, start, end, colour):
-    data = pd.read_csv("skater_data/tss_scores.csv")
+def skater_plot_for_comparison(category_name, skater, score, segment, start, end, colour):
+    data = pd.read_csv("skater_data/" + category_name + "_tss_scores.csv")
     data = data.loc[data["skater_name"] == skater.get("name")]
     data = data.loc[data["segment"] == segment]
     data["date_ordinal"] = pd.to_datetime(data["date"]).apply(lambda x: x.toordinal())
@@ -89,7 +90,7 @@ def compare_skaters_plot(category, score, segment, start, end):
     predictions = []
     i = 0
     for skater in category: 
-        prediction = skater_plot_for_comparison(skater, score, segment, start, end, colours[i])
+        prediction = skater_plot_for_comparison(category_name, skater, score, segment, start, end, colours[i])
         model = LinearRegression()
         model.fit(prediction[0], prediction[1])
         plt.scatter(prediction[0], prediction[1], color=colours[i])
@@ -106,41 +107,43 @@ def compare_skaters_plot(category, score, segment, start, end):
         f.write(prediction + "\n")
     f.close()
 
-def generate_regressions_for_all_skaters(category):
+def generate_regressions_for_all_skaters(category, category_name):
     for skater in category:
-        skater_plot_score_regression(skater, "tss", "short", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(skater, "tss", "long", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(skater, "pcs", "short", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(skater, "pcs", "long", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(skater, "tes", "short", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(skater, "tes", "long", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(skater, "bv", "short", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(skater, "bv", "long", start_of_season_2016_2017, winter_olympics_2018)
+        skater_plot_score_regression(category_name, skater, "tss", "short", start_of_season_2016_2017, winter_olympics_2018)
+        skater_plot_score_regression(category_name, skater, "tss", "long", start_of_season_2016_2017, winter_olympics_2018)
+        skater_plot_score_regression(category_name, skater, "pcs", "short", start_of_season_2016_2017, winter_olympics_2018)
+        skater_plot_score_regression(category_name, skater, "pcs", "long", start_of_season_2016_2017, winter_olympics_2018)
+        skater_plot_score_regression(category_name, skater, "tes", "short", start_of_season_2016_2017, winter_olympics_2018)
+        skater_plot_score_regression(category_name, skater, "tes", "long", start_of_season_2016_2017, winter_olympics_2018)
+        skater_plot_score_regression(category_name, skater, "bv", "short", start_of_season_2016_2017, winter_olympics_2018)
+        skater_plot_score_regression(category_name, skater, "bv", "long", start_of_season_2016_2017, winter_olympics_2018)
 
 # Outputs predicted ranking in txt file
 def generate_skater_ranking(category, category_name, start, end):
+    skater_index = 0
     scores_list = {}
     for skater in category:
-        short_tes = skater_score_regression(skater, "tes", "short", start, end)
-        short_pcs = skater_score_regression(skater, "pcs", "short", start, end)
-        long_tes = skater_score_regression(skater, "tes", "long", start, end)
-        short_pcs = skater_score_regression(skater, "pcs", "long", start, end)
+        short_tes = float(skater_score_regression(category_name, skater, "tes", "short", start, end))
+        short_pcs = float(skater_score_regression(category_name, skater, "pcs", "short", start, end))
+        long_tes = float(skater_score_regression(category_name, skater, "tes", "long", start, end))
+        long_pcs = float(skater_score_regression(category_name, skater, "pcs", "long", start, end))
         final_estimation = short_tes + short_pcs + long_tes + long_pcs
-        scores_list.update({skater : final_estimation})
-    ranking = sorted(scores_list.items(), key=operator.itemgetter(1), reverse=True)
+        print(final_estimation)
+        scores_list.update({skater_index : final_estimation})
+        skater_index += 1
+    print(scores_list)
     
     create_project_dir("skater_data/rankings")
     file_name = category_name + "_ranking.txt"
     path = "skater_data/rankings/" + file_name
     delete_file_contents(path)
     f = open(path, 'w')
-    i = 0
-    while i < 10:
-        k = list(ranking.keys())[i]
-        skater_name = k.get("name")
-        skater_country = k.get("country")
-        score = ranking.get(k)
-        f.write(str(i) + ". " + skater_name + " " + skater_country + " " + string(score) + "\n")
+    i = 1
+    for key, value in sorted(scores_list.items(), key=operator.itemgetter(1), reverse=True):
+        skater_name = category[key].get("name")
+        skater_country = category[key].get("country")
+        score = "{0:.2f}".format(value)
+        f.write(str(i) + ". " + skater_name + " " + skater_country + " " + str(score) + "\n")
         i += 1
     f.close()
     
@@ -157,4 +160,9 @@ def create_project_dir(directory):
         os.makedirs(directory)
 
 
+####################### Execute functions ##########################################
 
+# generate_skater_ranking(men, "men", start_of_season_2016_2017, winter_olympics_2018)
+# generate_skater_ranking(ladies, "ladies", start_of_season_2016_2017, winter_olympics_2018)
+# generate_skater_ranking(pairs, "pairs", start_of_season_2016_2017, winter_olympics_2018)
+# generate_skater_ranking(dance, "dance", start_of_season_2016_2017, winter_olympics_2018)
