@@ -5,8 +5,9 @@ import csv
 import os
 from skaters import men, ladies, pairs, dance
 
-def skater_means(skater):
-    data = pd.read_csv("skater_data/tss_scores.csv")
+def skater_means(category_name, skater):
+    file_path = "skater_data/" + category_name + "_tss_scores.csv"
+    data = pd.read_csv(file_path)
     data = data.loc[data["skater_name"] == skater.get("name")]
     data_short = data.loc[data["segment"] == "short"]
     data_long = data.loc[data["segment"] == "long"]
@@ -18,8 +19,9 @@ def skater_means(skater):
     long_bv_mean = data_long["bv"].mean()
     short_tss_mean = data_short["tss"].mean()
     long_tss_mean = data_long["tss"].mean()
-    if not os.path.exists("skater_data/mean_scores.csv"):
-        with open("skater_data/mean_scores.csv", "w", newline="", encoding= "utf-8") as csvfile:
+    write_file_path = "skater_data/" + category_name + "_mean_scores.csv"
+    if not os.path.exists(write_file_path):
+        with open(write_file_path, "w", newline="", encoding= "utf-8") as csvfile:
             fieldnames = ["skater_name", "short_tes", "long_tes", "short_pcs", "long_pcs", "short_bv", "long_bv", "short_tss", "long_tss"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
@@ -36,7 +38,7 @@ def skater_means(skater):
                     })
         csvfile.close()
     else:
-        with open("skater_data/mean_scores.csv", "a", newline="", encoding= "utf-8") as csvfile:
+        with open(write_file_path, "a", newline="", encoding= "utf-8") as csvfile:
             fieldnames = ["skater_name", "short_tes", "long_tes", "short_pcs", "long_pcs", "short_bv", "long_bv", "short_tss", "long_tss"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writerow({
@@ -53,28 +55,32 @@ def skater_means(skater):
         csvfile.close()
 
 
-def generate_means_dataset():
-    for skater in skaters:
-        skater_means(skater)
-
-# generate_means_dataset()
+def generate_means_dataset(category, category_name):
+    for skater in category:
+        skater_means(category_name, skater)
 
 
-def plot_skater_data(x, y):
-    df = pd.read_csv("skater_data/mean_scores.csv")
-    fig, ax = plt.subplots()
-    ax.scatter(df[x], df[y], marker='o')
+
+def plot_skater_data(x, y, category_name):
+    df = pd.read_csv("skater_data/" + category_name + "_mean_scores.csv")
+    fig = plt.figure()
+    plt.scatter(df[x], df[y], marker='o')
 
     for i, name in enumerate(df['skater_name']):
-        ax.annotate(name, (df[x][i], df[y][i]))
+        plt.annotate(name, (df[x][i], df[y][i]))
     
     plt.xlabel(x)
     plt.ylabel(y)
     
-    fig.savefig("skater_data/plots/quad_stats.png", bbox_inches='tight')
-    plt.show()
+    fig.savefig("skater_data/plots/" + category_name + "_" + x + "_vs_" + y, bbox_inches='tight')
+    # plt.show()
 
-plot_skater_data("long_tss", "short_tss")
-plot_skater_data("short_pcs", "short_tes")
-plot_skater_data("long_pcs", "long_tes")
-plot_skater_data("long_bv", "long_tes")
+
+################################ Execute functions ######################
+
+# generate_means_dataset(men, "men")
+
+# plot_skater_data("long_tss", "short_tss", "men")
+# plot_skater_data("short_pcs", "short_tes", "men")
+# plot_skater_data("long_pcs", "long_tes", "men")
+# plot_skater_data("long_bv", "long_tes", "men")
