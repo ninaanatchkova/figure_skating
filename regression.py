@@ -63,7 +63,8 @@ def skater_plot_score_regression(category_name, skater, score, segment, start, e
     plt.ylabel(score.upper())
     plt.xlim(xmin=start, xmax=end)
 
-    fig.savefig("skater_data/plots/" + skater_name_to_string(skater) + "_" + segment + "_" + score + "_" + prediction_string + ".png")
+    create_project_dir("skater_data/plots/" + skater_name_to_string(skater))
+    fig.savefig("skater_data/plots/" + skater_name_to_string(skater) + "/" + skater_name_to_string(skater) + "_" + segment + "_" + score + "_" + prediction_string + ".png", bbox_inches='tight')
     #plt.show()
 
     # Prepare skater plot for comparison
@@ -85,10 +86,11 @@ def skater_plot_for_comparison(category_name, skater, score, segment, start, end
     return [X, y, prediction_statement, prediction_string]
 
     # Comparison plot for all skaters in category
-def compare_skaters_plot(category, score, segment, start, end):
+def compare_skaters_plot(category, category_name, score, segment, start, end):
     colours = ("#ECDB54", "#E94B3C", "#944743", "#6F9FD8", "#EC9787", "#00A591", "#6B5B95", "#BC70A4", "#2E4A62", "#92B558")
     predictions = []
     i = 0
+    fig = plt.figure()
     for skater in category: 
         prediction = skater_plot_for_comparison(category_name, skater, score, segment, start, end, colours[i])
         model = LinearRegression()
@@ -100,23 +102,21 @@ def compare_skaters_plot(category, score, segment, start, end):
     plt.xlabel("Time")
     plt.ylabel(score.upper())
     plt.xlim(xmin=start, xmax=end)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.show()
-    f = open("skater_data/plots/" + segment + "_" + score + "_predictions.txt", 'w')
-    for prediction in predictions:
-        f.write(prediction + "\n")
-    f.close()
+    lgt = plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    fig.savefig("skater_data/plots/" + category_name + "_" + segment + "_" + score, bbox_extra_artists=(lgt,), bbox_inches='tight')
+    #plt.tight_layout()
+    #plt.show()
 
-def generate_regressions_for_all_skaters(category, category_name):
+def generate_regressions_for_all_skaters(category, category_name, start, end):
     for skater in category:
-        skater_plot_score_regression(category_name, skater, "tss", "short", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(category_name, skater, "tss", "long", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(category_name, skater, "pcs", "short", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(category_name, skater, "pcs", "long", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(category_name, skater, "tes", "short", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(category_name, skater, "tes", "long", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(category_name, skater, "bv", "short", start_of_season_2016_2017, winter_olympics_2018)
-        skater_plot_score_regression(category_name, skater, "bv", "long", start_of_season_2016_2017, winter_olympics_2018)
+        skater_plot_score_regression(category_name, skater, "tss", "short", start, end)
+        skater_plot_score_regression(category_name, skater, "tss", "long", start, end)
+        skater_plot_score_regression(category_name, skater, "pcs", "short", start, end)
+        skater_plot_score_regression(category_name, skater, "pcs", "long", start, end)
+        skater_plot_score_regression(category_name, skater, "tes", "short", start, end)
+        skater_plot_score_regression(category_name, skater, "tes", "long", start, end)
+        skater_plot_score_regression(category_name, skater, "bv", "short", start, end)
+        skater_plot_score_regression(category_name, skater, "bv", "long", start, end)
 
 # Outputs predicted ranking in txt file
 def generate_skater_ranking(category, category_name, start, end):
@@ -148,6 +148,22 @@ def generate_skater_ranking(category, category_name, start, end):
     f.close()
     
 
+def compare_all_segments_for_category_plot(category, category_name, start, end):
+    compare_skaters_plot(category, category_name, "tss", "short", start, end)
+    compare_skaters_plot(category, category_name, "tss", "long", start, end)
+    compare_skaters_plot(category, category_name, "tes", "short", start, end)
+    compare_skaters_plot(category, category_name, "tes", "long", start, end)
+    compare_skaters_plot(category, category_name, "pcs", "short", start, end)
+    compare_skaters_plot(category, category_name, "pcs", "long", start, end)
+    compare_skaters_plot(category, category_name, "bv", "short", start, end)
+    compare_skaters_plot(category, category_name, "bv", "long", start, end)
+
+# Create folder for files
+def create_project_dir(directory):
+    if not os.path.exists(directory):
+        print('Creating folder ' + directory)
+        os.makedirs(directory)
+
 # Delete file contents
 def delete_file_contents(path):
     with open(path, 'w'):
@@ -166,3 +182,14 @@ def create_project_dir(directory):
 # generate_skater_ranking(ladies, "ladies", start_of_season_2016_2017, winter_olympics_2018)
 # generate_skater_ranking(pairs, "pairs", start_of_season_2016_2017, winter_olympics_2018)
 # generate_skater_ranking(dance, "dance", start_of_season_2016_2017, winter_olympics_2018)
+
+
+# compare_all_segments_for_category_plot(men, "men", start_of_season_2016_2017, winter_olympics_2018)
+# compare_all_segments_for_category_plot(ladies, "ladies", start_of_season_2016_2017, winter_olympics_2018)
+# compare_all_segments_for_category_plot(pairs, "pairs", start_of_season_2016_2017, winter_olympics_2018)
+# compare_all_segments_for_category_plot(dance, "dance", start_of_season_2016_2017, winter_olympics_2018)
+
+# generate_regressions_for_all_skaters(men, "men", start_of_season_2016_2017, winter_olympics_2018)
+
+compare_skaters_plot(dance, "dance", "bv", "short", start_of_season_2016_2017, winter_olympics_2018)
+compare_skaters_plot(dance, "dance", "bv", "long", start_of_season_2016_2017, winter_olympics_2018)
